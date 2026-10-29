@@ -1,0 +1,85 @@
+{
+  "brand": [
+    "Audi",
+    "BMW",
+    "Datsun",
+    "Force",
+    "Ford",
+    "Honda",
+    "Hyundai",
+    "ISUZU",
+    "Isuzu",
+    "Jaguar",
+    "Jeep",
+    "Kia",
+    "Land Rover",
+    "Lexus",
+    "MG",
+    "Mahindra",
+    "Maruti",
+    "Mercedes-Benz",
+    "Mini",
+    "Nissan",
+    "Porsche",
+    "Renault",
+    "Skoda",
+    "Tata",
+    "Toyota",
+    "Volkswagen",
+    "Volvo"
+  ],
+  "fuel_type": [
+    "CNG",
+    "Diesel",
+    "Electric",
+    "LPG",
+    "Petrol"
+  ],
+  "transmission_type": [
+    "Automatic",
+    "Manual"
+  ],
+  "seller_type": [
+    "Dealer",
+    "Individual",
+    "Trustmark Dealer"
+  ],
+  "ranges": {
+    "vehicle_age": [
+      0.0,
+      29.0
+    ],
+    "km_driven": [
+      100.0,
+      211000.0
+    ],
+    "mileage": [
+      7.5,
+      33.54
+    ],
+    "engine": [
+      793.0,
+      5461.0
+    ],
+    "max_power": [
+      38.4,
+      500.0
+    ],
+    "seats": [
+      0.0,
+      9.0
+    ]
+  },
+  "columns": [
+    "vehicle_age",
+    "km_driven",
+    "mileage",
+    "engine",
+    "max_power",
+    "seats",
+    "brand",
+    "fuel_type",
+    "transmission_type",
+    "seller_type"
+  ]
+}
