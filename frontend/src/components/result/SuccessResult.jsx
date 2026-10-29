@@ -220,7 +220,7 @@ export default function SuccessResult({ result, carData, onReset }) {
             <Info className="w-4 h-4 shrink-0 text-slate-400 mt-0.5" />
             <div>
               <p>
-                <strong>Typical model error:</strong> About ±{formatInr(typical_error_inr)} ($MAE$ on 3,003 test-cars).
+                <strong>Typical model error:</strong> About ±{formatInr(typical_error_inr)} (MAE on 3,003 test cars).
               </p>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                 Estimates benchmarked against CarDekho listings. Physical inspections may justify adjustments.

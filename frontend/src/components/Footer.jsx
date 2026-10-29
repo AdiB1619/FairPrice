@@ -35,7 +35,7 @@ export default function Footer({ onNav }) {
               <span>System Stack</span>
             </div>
             <p className="leading-relaxed text-slate-500 dark:text-slate-400">
-              Random Forest Regressor ($R^2 = 0.9332$) with tree-spread uncertainty bands. Served via FastAPI and React (Vite) as an academic supervised regression project.
+              Random Forest Regressor (R² = 0.9332) with tree-spread uncertainty bands. Served via FastAPI and React (Vite) as an academic supervised regression project.
             </p>
           </div>
         </div>

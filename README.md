@@ -51,9 +51,9 @@ The Indian pre-owned automobile market is fraught with severe information asymme
 - **Automated Valuation Engine**: $R^2 = 0.9332$ on held-out test data, capturing 93.3% of market variance with a median absolute percentage error of just **9.59%**.
 - **P10–P90 Fair Valuation Band**: Computes the 10th and 90th percentiles of tree predictions to quantify model disagreement (narrow, moderate, or wide uncertainty).
 - **Three-Tier Negotiation Verdicts**:
-  - 🟢 **Good Deal**: Asking price below P10 ($\ge 5\%$ below market value).
-  - 🔵 **Fair Price**: Asking price nestled safely inside the P10–P90 band.
-  - 🔴 **Overpriced**: Asking price above P90 (includes an algorithmic counter-offer suggestion).
+  - 🟢 **Good Deal**: Asking price is strictly below the 10th percentile of tree predictions ($\text{asking\_price} < P_{10}$).
+  - 🔵 **Fair Price**: Asking price is nestled safely inside the fair band ($P_{10} \le \text{asking\_price} \le P_{90}$).
+  - 🔴 **Overpriced**: Asking price is above the 90th percentile ($\text{asking\_price} > P_{90}$), triggering an algorithmic negotiation counter-offer.
 - **Interactive Market Insights**: Lazy-loaded dashboard featuring live model benchmarks, Gini feature importances, holdout scatter plots with $y=x$ ideal lines, and depreciation curves.
 - **Explainable Pipeline Stepper**: Interactive 5-stage pipeline walkthrough with Headless UI collapsible disclosure accordions detailing exact mathematical formulas.
 - **Production UI System**: Built with Tailwind CSS v4 design tokens, Inter typography, Lucide SVG iconography, Framer Motion transitions, responsive 7/5 desktop split, and persistent `localStorage` history.
@@ -106,7 +106,7 @@ CarDekho Raw Data (15,411 rows)
       └── y_trans = log(1 + selling_price)  [Neutralizes luxury right-skew]
           │
           ▼
-   3. 80 / 20 Train-Test Stratified Split (12,012 Train / 3,003 Holdout Test)
+   3. 80 / 20 Train-Test Random Split (12,012 Train / 3,003 Holdout Test, random_state=42)
           │
           ▼
    4. Pipeline Preprocessing (Strictly inside CV to prevent data leakage)
@@ -115,7 +115,7 @@ CarDekho Raw Data (15,411 rows)
           │
           ▼
    5. Two-Stage Feature Selection
-      ├── Collinearity Filter: Drop feature with |r| > 0.85
+      ├── Collinearity Check: Evaluated |r| > 0.85 (max observed: 0.80 -> 0 features dropped)
       └── Univariate Selection: SelectKBest(score_func=f_regression)
           │
           ▼
@@ -134,8 +134,9 @@ CarDekho Raw Data (15,411 rows)
 - **Logarithmic Price Transformation**: Market prices exhibit a heavy right-skew ($₹20,000$ to $₹1.5\text{ Cr}$). Training directly on raw rupees allows luxury vehicles to dominate loss functions. Applying $y_{\text{train}} = \ln(1 + \text{price})$ stabilizes residual variance. Predictions are inverted at inference via $\hat{y} = \exp(y_{\text{pred}}) - 1$.
 
 ### 2. Feature Engineering & Selection
-- **Multicollinearity Elimination**: Calculated Pearson correlation matrix across all numeric features. Features with $|r| > 0.85$ (e.g., displacement and horsepower) were filtered to eliminate redundancy.
-- **Univariate Selection (`SelectKBest`)**: Scored encoded features against the target using ANOVA F-regression statistics.
+- **Collinearity Check**: Evaluated Pearson correlation across all continuous numeric predictors with a redundancy cutoff of $|r| > 0.85$. The highest observed correlation in the dataset was $0.8005$ (between engine displacement and max power). Because this remained below the threshold, all original numeric features were retained as independent predictive signals (0 features dropped).
+- **Univariate Selection (`SelectKBest`)**: Scored encoded features against log-price using ANOVA F-regression statistics.
+- **Reproducible Train/Test Partition**: Used an 80/20 train-test split (`random_state=42`) yielding 12,012 training and 3,003 unseen holdout test samples. Because the target is continuous regression, stratification was not used.
 - **Zero Data Leakage Guarantee**: All encoders, scalers, and selection steps are encapsulated inside a scikit-learn `Pipeline` fitted exclusively on training folds.
 
 ### 3. Model Architecture
@@ -159,7 +160,7 @@ Evaluated rigorously on the **3,003-vehicle holdout test set** (never seen durin
 | **Mean Absolute Error (MAE)** | **₹89,186** | ₹1,30,267 | **-₹41,081 (31.5% better)** |
 | **Median Absolute Error (MedAE)** | **₹51,369** | ₹82,450 | **-₹31,081 (Typical error)** |
 | **Root Mean Squared Error (RMSE)**| **₹1,57,778** | ₹2,65,151 | **-₹1,07,373 (40.5% better)**|
-| **Mean Absolute % Error (MAPE)** | **12.76%** | 19.84% | **-7.08%** |
+| **Mean Absolute % Error (MAPE)** | **12.76%** | 18.35% | **-5.59%** |
 | **Median Absolute % Error (MdAPE)**| **9.59%** | 14.21% | **-4.62%** |
 | **5-Fold CV $R^2$ (Log Price)** | **0.9276** | 0.8805 | **+0.0471** |
 
@@ -226,10 +227,13 @@ Within ±30% of Actual Market Price :  92.97%  [██████████�
 ---
 
 ### 5. Uncertainty & Tree Calibration (P10–P90 Spread)
-- **Number of Estimators**: 150 trees.
+- **Number of Estimators**: 150 randomized decision trees.
 - **P10–P90 Empirical Coverage**: **59.91%** of actual market prices fall strictly inside the tree spread.
+- **Why ~60% instead of ~80%?**:
+  - The P10–P90 spread measures **model ensemble disagreement (epistemic uncertainty)** across 150 bootstrap trees, *not* a formal 80% conformal or parametric Gaussian prediction interval.
+  - Because tree predictions are shrinkage estimates centered around local conditional means, their inter-tree spread is naturally tighter than the full observation error distribution (which includes unobserved car condition noise).
 - **Uncertainty-Error Correlation**: **$r = 0.644$**
-  - There is a strong positive correlation between the width of the fair range and the actual prediction error. This empirically proves that when trees disagree, the car is genuinely harder to price, making the UI's **Range Width Indicator** (Narrow / Moderate / Wide) a trustworthy confidence metric.
+  - A strong positive correlation ($0.644$) confirms that when the trees disagree significantly (yielding a wide "Fair Range"), actual estimation error is genuinely higher. This mathematically validates the UI's **Range Width Indicator** (Narrow / Moderate / Wide) as an honest signal of valuation difficulty.
 
 ---
 
@@ -237,14 +241,23 @@ Within ±30% of Actual Market Price :  92.97%  [██████████�
 Controlled perturbation tests were performed holding all features constant while varying individual physical variables:
 
 1. **Age vs. Depreciation (Maruti Swift Profile, 45,000 km)**:
-   - 0–1 yr: ₹5,78,805 *(Leaf grouping)* $\to$ 2 yr: ₹5,69,984 $\to$ 3 yr: ₹5,65,702 $\to$ 5 yr: ₹5,29,540 $\to$ 7 yr: ₹4,34,131 $\to$ 10 yr: ₹2,63,407 $\to$ 15 yr: ₹1,84,599.
-   - **Verdict: PASS.** Captures steep initial decay followed by an asymptote.
+   - Year 0: **₹5,78,805**
+   - Year 1: **₹5,78,805** *(Step leaf partition: zero drop)*
+   - Year 2: **₹5,69,984** (-₹8,821)
+   - Year 3: **₹5,65,702** (-₹4,282)
+   - Year 4: **₹5,79,288** (+₹13,586 bump)
+   - Year 5: **₹5,29,540** (-₹49,748)
+   - Year 7: **₹4,34,131** (-₹95,409)
+   - Year 10: **₹2,63,407** (-₹1,70,724)
+   - Year 15: **₹1,84,599** (-₹78,808)
+   - **Verdict**: **FAIL (Strict Monotonicity)** / **Predominantly Monotonic with Step-Function Partition Artifact**.
+   - **Why the Year 4 bump occurs**: Random Forest partitions feature space into orthogonal step-function hyper-rectangles without enforcing smooth monotonic constraints (`monotone_cst`). Small local sample density shifts between years 3 and 4 in the training data cause a minor ₹13.5k step fluctuation. Over the full lifecycle (0 to 15 years), the model correctly models macro-depreciation (-₹3,94,206 net drop).
 2. **Odometer Usage vs. Value (Fixed Age = 5 yrs)**:
    - 5,000 km: ₹5,50,711 $\to$ 20,000 km: ₹5,44,797 $\to$ 45,000 km: ₹5,29,540 $\to$ 80,000 km: ₹4,96,783 $\to$ 120,000 km: ₹4,49,310 $\to$ 180,000 km: ₹4,48,428.
-   - **Verdict: PASS (Strictly Decreasing).**
+   - **Verdict: PASS (Strictly Decreasing with Mileage).**
 3. **Horsepower & Displacement Scaling**:
    - Economy (67 bhp, 998cc): **₹4,25,177** $\to$ Mid Hatch (83 bhp, 1,197cc): **₹5,74,241** $\to$ Turbo Sedan (118 bhp, 1,498cc): **₹9,16,438** $\to$ Performance (188 bhp, 1,995cc): **₹21,77,629**.
-   - **Verdict: PASS (Monotonically Escalates).**
+   - **Verdict: PASS (Monotonically Escalates with Power & Size).**
 
 ---
 
