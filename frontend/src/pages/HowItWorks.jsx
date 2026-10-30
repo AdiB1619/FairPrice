@@ -69,14 +69,14 @@ const PIPELINE_STEPS = [
     title: 'Ensemble Model Training',
     short: 'Training',
     icon: Sparkles,
-    summary: 'Linear Regression baseline pitted against a 150-tree Random Forest regressor.',
+    summary: 'AdaBoost Regressor (Boosting) benchmarked against a 150-tree Random Forest regressor (Bagging).',
     description:
-      'We evaluate two paradigms: an interpretable Linear Regression baseline and a 150-tree Random Forest regressor with min_samples_leaf=3. While linear models assume price decays steadily, used car depreciation is severely non-linear (steep drop in years 1-4, leveling thereafter). Random Forest captures this curve effortlessly, boosting R² from 0.811 to 0.933.',
+      'We compare two premier ensemble paradigms: AdaBoost Regressor (Assignment 9, sequential decision tree boosting to reduce bias) and Random Forest Regressor (parallel decision tree bagging to reduce variance). While AdaBoost achieves an impressive R² of 0.9307, Random Forest edges it out with R² = 0.9332 (MAE ₹89,186) and uniquely allows extracting the P10–P90 tree prediction spread to quantify valuation uncertainty.',
     techDetails: {
-      ensembleSize: '150 randomized decision trees (n_estimators=150)',
-      regularization: 'min_samples_leaf=3, max_features=0.5 (prevents leaf memorization)',
-      crossValidation: '5-Fold Stratified K-Fold CV (CV R² = 0.9276)',
-      hyperparameterSearch: 'RandomizedSearchCV with 5-fold CV on log space',
+      adaBoost: 'AdaBoostRegressor(n_estimators=150, learning_rate=0.1, loss="linear")',
+      randomForest: 'RandomForestRegressor(n_estimators=150, min_samples_leaf=3, max_features=0.5)',
+      crossValidation: '5-Fold CV on log(1 + price) space',
+      hyperparameterSearch: 'RandomizedSearchCV with SelectKBest feature selection',
     },
   },
   {

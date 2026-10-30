@@ -9,7 +9,7 @@ Steps implemented (following PLAN.md section 6):
   3. 80/20 train/test split with a fixed seed
   4. Correlation-based redundancy filter on numeric features
   5. Build a preprocessing → SelectKBest → model Pipeline
-  6. Tune Linear Regression (GridSearchCV) and Random Forest (RandomizedSearchCV)
+  6. Tune AdaBoost Regressor and Random Forest (RandomizedSearchCV)
   7. Evaluate on the held-out test set: R², MAE, RMSE (in rupees)
   8. Save model.joblib, options.json, and metrics.json to backend/artifacts/
 """
@@ -35,9 +35,8 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import AdaBoostRegressor, RandomForestRegressor
 from sklearn.feature_selection import SelectKBest, f_regression
-from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import (
     GridSearchCV,
@@ -47,6 +46,7 @@ from sklearn.model_selection import (
 )
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.tree import DecisionTreeRegressor
 
 warnings.filterwarnings("ignore")
 
@@ -230,7 +230,7 @@ def main():
     actual = test[TARGET].to_numpy()
 
     # ── determine max k (total encoded features after ColumnTransformer) ──
-    _temp = build_pipeline(num_cols, LinearRegression(), k=1)
+    _temp = build_pipeline(num_cols, DecisionTreeRegressor(), k=1)
     _temp_fitted = Pipeline(_temp.steps[:-2])   # just the prep step
     _temp_fitted.fit(X_tr, y_tr)
     max_features = _temp_fitted[-1].transform(X_tr).shape[1]
@@ -242,12 +242,26 @@ def main():
         k_candidates = [max_features]
     print(f"k search space: {k_candidates}\n")
 
-    # ── Step 4 + 5: train and evaluate both models ──
+    # ── Step 4 + 5: train and evaluate both ensemble models (AdaBoost vs Random Forest) ──
     searches = {
-        "Linear Regression": GridSearchCV(
-            build_pipeline(num_cols, LinearRegression(), k=k_candidates[-1]),
-            {"select__k": k_candidates},
-            cv=5, scoring="r2", n_jobs=-1, verbose=0,
+        "AdaBoost": RandomizedSearchCV(
+            build_pipeline(
+                num_cols,
+                AdaBoostRegressor(random_state=SEED),
+                k=k_candidates[-1],
+            ),
+            {
+                "select__k": k_candidates,
+                "model__estimator": [
+                    DecisionTreeRegressor(max_depth=5),
+                    DecisionTreeRegressor(max_depth=7),
+                    DecisionTreeRegressor(max_depth=9),
+                ],
+                "model__n_estimators": [80, 100, 150],
+                "model__learning_rate": [0.05, 0.1, 0.15],
+                "model__loss": ["linear", "square"],
+            },
+            n_iter=10, cv=5, scoring="r2", random_state=SEED, n_jobs=-1, verbose=1,
         ),
         "Random Forest": RandomizedSearchCV(
             build_pipeline(

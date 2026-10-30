@@ -68,7 +68,7 @@ The left panel presents an organized 3-tier form (Basics, Usage, Specs) with qui
 ![Price Checker 1440px](frontend/screenshots/stage-c/stage-c-checker-1440px.png)
 
 ### 2. Market Insights & Model Benchmarks (Desktop 1440px)
-Live KPI cards, model comparison table (highlighting Random Forest over Linear Regression), Gini feature importance bar chart, holdout actual-vs-predicted scatter, and depreciation curves.
+Live KPI cards, model comparison table (benchmarking Random Forest alongside AdaBoost Regressor), Gini feature importance bar chart, holdout actual-vs-predicted scatter, and depreciation curves.
 
 ![Insights 1440px](frontend/screenshots/stage-c/stage-c-insights-1440px.png)
 
@@ -120,7 +120,7 @@ CarDekho Raw Data (15,411 rows)
           │
           ▼
    6. Hyperparameter Optimization & Ensemble Training
-      ├── Linear Regression Baseline (GridSearchCV on k)
+      ├── AdaBoost Regressor (RandomizedSearchCV on n_estimators, learning_rate, depth)
       └── Random Forest Regressor (150 trees, min_samples_leaf=3, max_features=0.5)
           │
           ▼
@@ -140,31 +140,26 @@ CarDekho Raw Data (15,411 rows)
 - **Zero Data Leakage Guarantee**: All encoders, scalers, and selection steps are encapsulated inside a scikit-learn `Pipeline` fitted exclusively on training folds.
 
 ### 3. Model Architecture
-- **Baseline**: Standardized Linear Regression with ANOVA F-test selection ($k$ tuned via cross-validation).
-- **Production Model**: Random Forest Regressor ($N=150$ estimators, `min_samples_leaf=3`, `max_features=0.5`). Random Forest captures non-linear depreciation and high-order interactions without overfitting.
+- **Boosting Ensemble**: AdaBoost Regressor (`n_estimators=150`, `learning_rate=0.1`, `estimator=DecisionTreeRegressor(max_depth=9)`). Demonstrates sequential boosting where subsequent estimators focus on difficult-to-price outlier vehicles.
+- **Bagging Production Model**: Random Forest Regressor ($N=150$ estimators, `min_samples_leaf=3`, `max_features=0.5`). Random Forest captures non-linear depreciation and high-order interactions without overfitting, and provides individual tree predictions for the P10–P90 Fair Market Range.
 
 ---
 
 ## 📊 Minute-Level Model Evaluation & Results
 
-Evaluated rigorously on the **3,003-vehicle holdout test set** (never seen during training or tuning). Metrics generated via [`ml/deep_model_test.py`](ml/deep_model_test.py) and serialized to [`ml/deep_test_report.json`](ml/deep_test_report.json).
+Evaluated rigorously on the **3,003-vehicle holdout test set** (never seen during training or tuning). Metrics generated via [`ml/train.py`](ml/train.py) and serialized to [`backend/artifacts/metrics.json`](backend/artifacts/metrics.json).
 
-### 1. Overall Statistical Precision
+### 1. Ensemble Comparison & Statistical Precision
 
-| Metric | Random Forest (Production) | Linear Regression (Baseline) | Delta / Improvement |
+| Metric | Random Forest (Production Bagging) | AdaBoost (Ensemble Boosting) | Advantage / Analysis |
 | :--- | :---: | :---: | :---: |
-| **$R^2$ Score (Test Set)** | **0.9332** | 0.8114 | **+12.18%** |
-| **Adjusted $R^2$** | **0.9330** | 0.8091 | **+12.39%** |
-| **Pearson Correlation ($r$)** | **0.9674** | 0.9022 | **+0.0652** |
-| **Spearman Rank ($\rho$)** | **0.9618** | 0.8974 | **+0.0644** |
-| **Mean Absolute Error (MAE)** | **₹89,186** | ₹1,30,267 | **-₹41,081 (31.5% better)** |
-| **Median Absolute Error (MedAE)** | **₹51,369** | ₹82,450 | **-₹31,081 (Typical error)** |
-| **Root Mean Squared Error (RMSE)**| **₹1,57,778** | ₹2,65,151 | **-₹1,07,373 (40.5% better)**|
-| **Mean Absolute % Error (MAPE)** | **12.76%** | 18.35% | **-5.59%** |
-| **Median Absolute % Error (MdAPE)**| **9.59%** | 14.21% | **-4.62%** |
-| **5-Fold CV $R^2$ (Log Price)** | **0.9276** | 0.8805 | **+0.0471** |
+| **$R^2$ Score (Test Set)** | **0.9332** | 0.9307 | **Both capture >93% variance** |
+| **Mean Absolute Error (MAE)** | **₹89,186** | ₹95,804 | **RF edges out AdaBoost by -₹6,618** |
+| **Root Mean Squared Error (RMSE)**| **₹1,57,778** | ₹1,60,752 | **RF penalizes luxury outliers better (-₹2,974)** |
+| **5-Fold CV $R^2$ (Log Price)** | **0.9276** | 0.9196 | **RF exhibits higher cross-fold stability** |
+| **Fair Range Capability** | **Yes (P10–P90 tree spread)** | No (weighted point estimate) | **RF uniquely enables uncertainty intervals** |
 
-> **Key Takeaway**: While the mean error across all cars is ₹89k, **50% of typical buyers experience an absolute error under ₹51,369**, with a median percentage error under **9.6%**.
+> **Key Takeaway**: Both ensemble architectures achieve outstanding predictive power (>93% accuracy). Random Forest was selected as the final production engine because it achieves lower MAE and uniquely provides individual tree leaf spreads to quantify the P10–P90 Fair Market Range.
 
 ---
 
@@ -527,8 +522,8 @@ Quick answers to common technical questions:
 - **Q: Why use $\log(1 + p)$ target transformation?**  
   *A:* Used car prices in India range from ₹20,000 to over ₹1.5 Crore, creating severe positive skew. Training on raw prices causes squared-error losses to be dominated by expensive luxury outliers. Log transformation normalizes residuals and optimizes relative percentage error.
 
-- **Q: Why Random Forest instead of Linear Regression?**  
-  *A:* Car depreciation is fundamentally non-linear: a vehicle depreciates sharply in years 0–4 before stabilizing. Linear regression enforces a constant slope, underestimating new cars and overestimating old ones. Random Forest captures this curve, boosting $R^2$ from 0.811 to 0.933 and slashing MAE by ₹41,081.
+- **Q: Why Random Forest instead of AdaBoost or other algorithms?**  
+  *A:* We evaluated both premier ensemble methods: **AdaBoost Regressor (Assignment 9, Boosting)** and **Random Forest (Bagging)**. While AdaBoost achieved strong accuracy ($R^2 = 0.9307$, MAE = ₹95,804), Random Forest edged it out with $R^2 = 0.9332$ and MAE = ₹89,186. Crucially, Random Forest's 150 independent decision trees allowed us to extract the **10th and 90th percentile tree spread** to calculate the **P10–P90 Fair Market Range**, enabling honest uncertainty quantification that boosting cannot natively provide.
 
 - **Q: How is data leakage prevented?**  
   *A:* The 80/20 train-test split is performed *before* any feature scaling or selection. Preprocessing transformations (`StandardScaler`, `OneHotEncoder`, `SelectKBest`) are encapsulated inside a scikit-learn `Pipeline` that only learns parameters from training folds.

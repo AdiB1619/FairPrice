@@ -198,9 +198,9 @@ export default function Insights() {
     n_rows = 15015,
   } = metrics;
 
-  // Best model (Random Forest)
+  // Best model (Random Forest) and competitor (AdaBoost)
   const rfModel = models['Random Forest'] || {};
-  const lrModel = models['Linear Regression'] || {};
+  const adaModel = models['AdaBoost'] || {};
 
   // Formatted Top 10 Features for BarChart
   const featureData = [...feature_importance]
@@ -404,39 +404,39 @@ export default function Insights() {
                 </td>
               </tr>
 
-              {/* Linear Regression Baseline */}
+              {/* AdaBoost Regressor Ensemble Competitor */}
               <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                 <td className="py-4 px-4 sm:px-6">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
                       <TrendingUp className="w-4 h-4" />
                     </div>
                     <div>
                       <span className="font-medium text-slate-800 dark:text-slate-200">
-                        Linear Regression
+                        AdaBoost Regressor
                       </span>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Standardized baseline with SelectKBest
+                        Sequential boosting with DecisionTree estimators (Assignment 9)
                       </p>
                     </div>
                   </div>
                 </td>
                 <td className="py-4 px-4 sm:px-6">
                   <Badge variant="neutral" size="sm">
-                    Baseline
+                    Boosting Ensemble
                   </Badge>
                 </td>
-                <td className="py-4 px-4 sm:px-6 font-mono text-slate-600 dark:text-slate-400">
-                  {lrModel.r2?.toFixed(4) ?? '0.8114'}
+                <td className="py-4 px-4 sm:px-6 font-mono text-slate-700 dark:text-slate-300 font-semibold">
+                  {adaModel.r2?.toFixed(4) ?? '0.9307'}
                 </td>
-                <td className="py-4 px-4 sm:px-6 font-mono text-slate-600 dark:text-slate-400">
-                  {formatInr(lrModel.mae ?? 130267)}
+                <td className="py-4 px-4 sm:px-6 font-mono text-slate-700 dark:text-slate-300">
+                  {formatInr(adaModel.mae ?? 95804)}
                 </td>
-                <td className="py-4 px-4 sm:px-6 font-mono text-slate-600 dark:text-slate-400">
-                  {formatInr(lrModel.rmse ?? 265151)}
+                <td className="py-4 px-4 sm:px-6 font-mono text-slate-700 dark:text-slate-300">
+                  {formatInr(adaModel.rmse ?? 160752)}
                 </td>
-                <td className="py-4 px-4 sm:px-6 font-mono text-slate-600 dark:text-slate-400">
-                  {lrModel.cv_r2_on_log_price?.toFixed(4) ?? '0.8805'}
+                <td className="py-4 px-4 sm:px-6 font-mono text-slate-700 dark:text-slate-300">
+                  {adaModel.cv_r2_on_log_price?.toFixed(4) ?? '0.9196'}
                 </td>
               </tr>
             </tbody>
@@ -445,7 +445,7 @@ export default function Insights() {
         <div className="p-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
           <Info className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0" />
           <span>
-            Random Forest outperforms the baseline by <strong>+12.2% R²</strong> and cuts typical estimation error by <strong>₹41,081</strong>, capturing non-linear depreciation curves.
+            Both ensemble architectures achieve top-tier performance (&gt;93% R²). Random Forest edges out AdaBoost by <strong>₹6,618 in MAE</strong> and uniquely provides individual tree leaf spreads for the P10–P90 Fair Market Range.
           </span>
         </div>
       </Card>
