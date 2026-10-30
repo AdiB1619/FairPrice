@@ -61,7 +61,7 @@ const PIPELINE_STEPS = [
       leakagePrevention: 'Selection operates strictly INSIDE the cross-validated Pipeline on training folds only.',
       collinearityThreshold: '|r| > 0.85 drops redundant predictor',
       scorer: 'f_regression (Scikit-Learn univariate F-test)',
-      agreementValidation: 'SelectKBest top rankings verified against Random Forest Gini impurity rankings.',
+      agreementValidation: 'SelectKBest top rankings verified against Random Forest MDI variance reduction rankings.',
     },
   },
   {

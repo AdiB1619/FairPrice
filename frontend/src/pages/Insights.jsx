@@ -454,10 +454,10 @@ export default function Insights() {
       <Card className="p-5 sm:p-6">
         <div className="mb-4">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            Feature Importance (Gini Impurity Reduction)
+            Feature Importance (Mean Squared Error / Variance Reduction)
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Top 10 predictors driving the decision tree splits in the Random Forest ensemble.
+            Top 10 predictors driving variance reduction (MDI) across all 150 decision trees in the ensemble.
           </p>
         </div>
 

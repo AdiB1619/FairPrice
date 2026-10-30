@@ -54,7 +54,7 @@ The Indian pre-owned automobile market is fraught with severe information asymme
   - 🟢 **Good Deal**: Asking price is strictly below the 10th percentile of tree predictions ($\text{asking\_price} < P_{10}$).
   - 🔵 **Fair Price**: Asking price is nestled safely inside the fair band ($P_{10} \le \text{asking\_price} \le P_{90}$).
   - 🔴 **Overpriced**: Asking price is above the 90th percentile ($\text{asking\_price} > P_{90}$), triggering an algorithmic negotiation counter-offer.
-- **Interactive Market Insights**: Lazy-loaded dashboard featuring live model benchmarks, Gini feature importances, holdout scatter plots with $y=x$ ideal lines, and depreciation curves.
+- **Interactive Market Insights**: Lazy-loaded dashboard featuring live model benchmarks, feature importances (variance reduction), holdout scatter plots with $y=x$ ideal lines, and depreciation curves.
 - **Explainable Pipeline Stepper**: Interactive 5-stage pipeline walkthrough with Headless UI collapsible disclosure accordions detailing exact mathematical formulas.
 - **Production UI System**: Built with Tailwind CSS v4 design tokens, Inter typography, Lucide SVG iconography, Framer Motion transitions, responsive 7/5 desktop split, and persistent `localStorage` history.
 
@@ -68,7 +68,7 @@ The left panel presents an organized 3-tier form (Basics, Usage, Specs) with qui
 ![Price Checker 1440px](frontend/screenshots/stage-c/stage-c-checker-1440px.png)
 
 ### 2. Market Insights & Model Benchmarks (Desktop 1440px)
-Live KPI cards, model comparison table (benchmarking Random Forest alongside AdaBoost Regressor), Gini feature importance bar chart, holdout actual-vs-predicted scatter, and depreciation curves.
+Live KPI cards, model comparison table (benchmarking Random Forest alongside AdaBoost Regressor), feature importance bar chart, holdout actual-vs-predicted scatter, and depreciation curves.
 
 ![Insights 1440px](frontend/screenshots/stage-c/stage-c-insights-1440px.png)
 
@@ -363,7 +363,7 @@ Calculates fair valuation, uncertainty range, and verdict.
 Returns valid categorical options and min/max numeric bounds for form validation.
 
 ### 3. `GET /api/metrics`
-Returns offline evaluation stats, model comparison rows, Gini importances, and chart data for the Insights page.
+Returns offline evaluation stats, model comparison rows, feature importances, and chart data for the Insights page.
 
 ### 4. `GET /api/health`
 Liveness probe returning `{"status": "ok"}`.
